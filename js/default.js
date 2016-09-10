@@ -79,6 +79,8 @@ function initPage (){
 }
 
 function initPage1 () {
+    if (app.inputData.name) $(".name").val(app.inputData.name);
+    if (app.inputData.mail) $(".mail").val(app.inputData.mail);
     document.getElementsByClassName("mail")[0].oninput = (event) => {
         if ($(event.target).val().indexOf('@') == -1) {
             $(event.target).addClass("wrong-input");
@@ -91,6 +93,8 @@ function initPage1 () {
 }
 
 function initPage2 () {
+    if (app.inputData.country) $("#country").val(app.inputData.country);
+    if (app.inputData.city) $("#city").val(app.inputData.city);
     document.getElementById("country").oninput = () => loadList("countries", "country");
     document.getElementById("country").focusout = () => {
         app.inputData.country = $("#country").val();
@@ -101,11 +105,19 @@ function initPage2 () {
 }
 
 function initPage3 () {
+    for (socNet in app.inputData.socialNetworks){
+        if (app.inputData.socialNetworks.hasOwnProperty(socNet) && app.inputData.socialNetworks[socNet]){
+            $("#url-" + socNet).val(app.inputData.socialNetworks[socNet]);
+            $("#url-" + socNet).fadeIn(200);
+            $("#" + socNet).attr("checked", "checked");
+        }
+    }
     $(".soc-block > label > input").change(function () {
-        if (this.checked){
-            $("#url-" + this.id).fadeIn(200);
-        } else {
+        if (this.checked) $("#url-" + this.id).fadeIn(200);
+        else {
             $("#url-" + this.id).fadeOut(200);
+            $("#url-" + this.id).val('');
+            app.inputData.socialNetworks[this.id] = null;
         }
     });
     var socials = document.getElementsByClassName("socnet-url");
@@ -117,6 +129,12 @@ function initPage3 () {
 }
 
 function initPage4 () {
+    if (app.inputData.imageName){
+        $(".img-pet").each(function () {
+            var src = this.src.match(/cat1\.jpg|cat2\.jpg|cat3\.jpg|dog4\.jpg/);
+            if (src == app.inputData.imageName) $(this).addClass("img-checked");
+        });
+    }
     $(".img-pet").click((event) => {
         $(".img-pet").each(function () {
             $(this).removeClass("img-checked");
@@ -131,9 +149,7 @@ function initPage4 () {
         }
     });
     $("#finish").click(() => {
-        if (app.current == 3 && app.inputData.imageName != null) {
-            app.pages[app.current].passed = true;
-        }
+        if (app.current == 3 && app.inputData.imageName != null) app.pages[app.current].passed = true;
         app.loadNextPage();
     });
 }
