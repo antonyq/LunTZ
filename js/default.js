@@ -1,7 +1,6 @@
 var app = {
     current: 0,
     page: null,
-    timeout: 1000,
     pages: [
         {   name: "name", passed: false   },
         {   name: "location", passed: false   },
@@ -9,6 +8,8 @@ var app = {
         {   name: "cats", passed: false   },
         {   name: "finish", passed: false   }
     ],
+    countries: null,
+    cities: null,
     setButtons: () => {
         app.pages.forEach((item, index) => {
             var button = $("#number-button" + parseInt(index + 1) +  " > span");
@@ -17,6 +18,19 @@ var app = {
             if (index == app.current) button.addClass("number-button-current");
             if (index != app.current && !app.pages[index].passed) button.addClass("number-button-unchecked");
         });
+    },
+    loadJSON: (fileName) => {
+        var request = new XMLHttpRequest();
+        request.open('GET', 'json/' + fileName + '.json', true);
+        request.send();
+        request.onreadystatechange = function(response) {
+            if (request.readyState === 4) {
+                if (request.status === 200) {
+                    var jsonOptions = JSON.parse(request.responseText);
+                    app[fileName] = jsonOptions;
+                }
+            }
+        };
     },
     loadPage: (number) => {
         if ((number == 0) || (app.pages[number - 1].passed && 0 < number && number < app.pages.length)){
@@ -52,9 +66,14 @@ var app = {
     }
 };
 window.onload = () => {
-    app.page = document.getElementsByClassName("page")[0];
-    app.restart();
-    app.loadPage(0);
+    try {
+        app.loadJSON("countries");
+        app.loadJSON("cities");
+    } finally {
+        app.page = document.getElementsByClassName("page")[0];
+        app.restart();
+        app.loadPage(0);
+    }
 };
 
 function initPage (){
@@ -65,14 +84,34 @@ function initPage (){
         app.loadPreviousPage();
     });
     $("#order-button2").click(() => {
-        if (app.current == 0 && $(".name").val() != '' && $(".mail").val().indexOf('@') != -1){
-            app.inputData.name = $(".name").val();
-            app.inputData.mail = $(".mail").val();
-            app.pages[app.current].passed = true;
-        } else if (app.current == 1 && $("#country").val() != '' && $("#city").val() != '') {
-            app.inputData.country = $("#country").val();
-            app.inputData.city = $("#city").val();
-            app.pages[app.current].passed = true;
+        if (app.current == 0){
+            if ($(".name").val() != '' && $(".mail").val().match(/^[-\w.]+@([A-z0-9][-A-z0-9]+\.)+[A-z]{2,4}$/)) {
+                app.inputData.name = $(".name").val();
+                app.inputData.mail = $(".mail").val();
+                app.pages[app.current].passed = true;
+            } else {
+                if ($(".name").val() == '' && $(".mail").val() == ''){
+                    alert("Введите имя и адрес электронной почты !");
+                } else if ($(".name").val() != '' && $(".mail").val() == ''){
+                    alert("Введите  адрес электронной почты !");
+                } else if ($(".name").val() != '' && !$(".mail").val().match(/^[-\w.]+@([A-z0-9][-A-z0-9]+\.)+[A-z]{2,4}$/)) {
+                    alert("Введите  адрес электронной почты НОРМАЛЬНО !");
+                } else if ($(".name").val() == '' && $(".mail").val() != '' && $(".mail").val().indexOf('@') != -1) {
+                    alert("Введите имя !");
+                }
+            }
+        } else if (app.current == 1) {
+            if ($("#country").val() != '' && $("#city").val() != ''){
+                app.inputData.country = $("#country").val();
+                app.inputData.city = $("#city").val();
+                app.pages[app.current].passed = true;
+            } else if ($("#country").val() == '' && $("#city").val() != '') {
+                alert("Введите страну !");
+            } else if ($("#country").val() != '' && $("#city").val() == '') {
+                alert("Введите город !");
+            } else {
+                alert("Введите страну и город !");
+            }
         } else if (app.current == 2) app.pages[app.current].passed = true;
         app.loadNextPage();
     });
@@ -82,7 +121,7 @@ function initPage1 () {
     if (app.inputData.name) $(".name").val(app.inputData.name);
     if (app.inputData.mail) $(".mail").val(app.inputData.mail);
     document.getElementsByClassName("mail")[0].oninput = (event) => {
-        if ($(event.target).val().indexOf('@') == -1) {
+        if (!$(event.target).val().match(/^[-\w.]+@([A-z0-9][-A-z0-9]+\.)+[A-z]{2,4}$/)){
             $(event.target).addClass("wrong-input");
             $(".mail-block > span").fadeIn(200);
         } else {
@@ -93,15 +132,33 @@ function initPage1 () {
 }
 
 function initPage2 () {
+    var countryInput = document.getElementById("country");
+    var cityInput = document.getElementById("city");
     if (app.inputData.country) $("#country").val(app.inputData.country);
     if (app.inputData.city) $("#city").val(app.inputData.city);
-    document.getElementById("country").oninput = () => loadList("countries", "country");
-    document.getElementById("country").focusout = () => {
+    countryInput.oninput = () => {
+        for (country in app.countries){
+            if (app.countries.hasOwnProperty(country) && $("#country").val() == app.countries[country]){
+                cityInput.focus();
+                return;
+            }
+        }
+        loadList("countries");
+    };
+    countryInput.focusout = () => {
         app.inputData.country = $("#country").val();
         $("#country").addClass("datalist-checked");
     };
-    document.getElementById("city").oninput = () => loadList("cities", "city");
-    document.getElementById("city").focusout = () => $("#city").addClass("datalist-checked");
+    cityInput.oninput = () => {
+        for (city in app.cities){
+            if (app.cities.hasOwnProperty(city) && $("#city").val() == app.cities[city].name){
+                cityInput.focusout();
+                return;
+            }
+        }
+        loadList("cities");
+    };
+    cityInput.focusout = () => $("#city").addClass("datalist-checked");
 }
 
 function initPage3 () {
@@ -149,7 +206,11 @@ function initPage4 () {
         }
     });
     $("#finish").click(() => {
-        if (app.current == 3 && app.inputData.imageName != null) app.pages[app.current].passed = true;
+        if (app.inputData.imageName != null) {
+            app.pages[app.current].passed = true;
+        } else {
+            alert("Докажите что вы не робот !)");
+        }
         app.loadNextPage();
     });
 }
@@ -190,37 +251,31 @@ function loadHTML(parent, name, callback){
     }
 }
 
-function loadList(listId, inputId){
-    var dataList = document.getElementById(listId);
-    var input = document.getElementById(inputId);
-    var request = new XMLHttpRequest();
-    request.open('GET', 'json/' + listId + '.json', true);
-    request.send();
-    request.onreadystatechange = function(response) {
-        if (request.readyState === 4) {
-            if (request.status === 200) {
-                var jsonOptions = JSON.parse(request.responseText);
-                app[listId] = jsonOptions;
-                if (listId == 'countries') $("#countries > option").each(function () {$(this).remove();});
-                if (listId == 'cities') $("#cities > option").each(function () {$(this).remove();});
-                for (prop in jsonOptions){
-                    if (jsonOptions.hasOwnProperty(prop)){
-                        if (listId == 'countries'){
-                            var option = document.createElement('option');
-                            option.value = jsonOptions[prop];
-                            dataList.appendChild(option);
-                        } else if (listId == "cities"){
-                            for (country in app['countries']){
-                                if (app['countries'][country] == app.inputData.country && country == jsonOptions[prop].country){
-                                    var option = document.createElement('option');
-                                    option.value = jsonOptions[prop]['name'];
-                                    dataList.appendChild(option);
-                                }
-                            }
-                        }
+function loadList(listName){
+    var dataList = document.getElementById(listName);
+    var option;
+    if (listName == 'countries' && app.countries) {
+        $("#countries > option").each(function () {$(this).remove();});
+        for (country in app.countries){
+            if (app.countries.hasOwnProperty(country)){
+                option = document.createElement('option');
+                option.value = app.countries[country];
+                dataList.appendChild(option);
+            }
+        }
+    }
+    if (listName == 'cities' && app.cities && app.countries) {
+        $("#cities > option").each(function () {$(this).remove();});
+        for (country in app.countries){
+            if (app.countries.hasOwnProperty(country) && app.countries[country] == app.inputData.country){
+                for (city in app.cities){
+                    if (app.cities.hasOwnProperty(city) && app.cities[city].country == country){
+                        var option = document.createElement('option');
+                        option.value = app.cities[city].name;
+                        dataList.appendChild(option);
                     }
                 }
-            } else input.placeholder = "Couldn't load countries :(";
+            }
         }
-    };
+    }
 }

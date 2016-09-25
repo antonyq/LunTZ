@@ -32,7 +32,6 @@ p{  margin: 0;  }
     position: relative;
     margin-left: 10px;
     height: 35px;
-    width: 35px;
     cursor: pointer;
     box-shadow: 1px 1px 3px rgba(100,100,100,0.5);
     border-radius: 2px;
@@ -82,8 +81,7 @@ p{  margin: 0;  }
 }
 
 .mail-block > span{
-    position: relative;
-    white-space: nowrap;
+    position: absolute;
     color: #ff0000;
     display: none;
 }
@@ -275,18 +273,36 @@ p{  margin: 0;  }
 }
 
 @media (max-width: 700px) {
+    .number-button {    margin-left:  5%;  }
+    .soc-block {
+        height: 70px;
+    }
+    label {
+        position: relative;
+        height: 20px;
+        width: 140px;
+        float: left;
+    }
+    .socnet-url{
+        margin-top: 0;
+        margin-left: 0;
+    }
     .img-pet{  margin-left: 30px;  }
     .img-finish{  margin-right: 0px;  }
+    .orders {   margin-top: 20px;   }
+    .screen3 > .row > .order-button {  margin: 45px x0 0;  }
+    .screen4 > .row > .order-button {  margin: 0 0 0;  }
 }
 
 @media (min-width: 700px) {
-    .page > .screen4{  width: 700px;  }
-    .number-button{  width: 35px;  }
-    .mail-block{  width: 565px;  }
-    .img-pet{  width: 150px;  height: 150px;  }
+    .number-button {    width: 35px;    }
+    .page > .screen4{  width: 845px;  }
+    .mail-block > span{  white-space: nowrap;  }
+    .mail-block, .name-block{  width: 565px;  }
+    .img-pet{  width: 200px;  height: 150px;  }
     .orders,
     .screen4 > .text-label,
-    .numbers{  margin-left: 169px;  }
-    .img-finish{  height: 195px;  width: 200px;  }
+    .numbers{  margin-left: 233px;  }
+    .img-finish{  height: 195px;  width: 235px;  }
     .info{  height: 243px;  width: 550px;  }
 }
